@@ -1,0 +1,1091 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>PeaceMaker AI — Conflict Resolution Platform</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;0,700;1,300;1,400&family=Outfit:wght@300;400;500;600;700&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet"/>
+<style>
+:root {
+  --bg:        #f5f2eb;
+  --bg2:       #ede9df;
+  --panel:     #ffffff;
+  --panel2:    #f9f7f3;
+  --ink:       #1a1814;
+  --ink2:      #3d3a33;
+  --muted:     #8a8578;
+  --muted2:    #b5b0a5;
+  --olive:     #6b7c4e;
+  --olive2:    #8fa36a;
+  --dove:      #7c8fa3;
+  --dove2:     #a3b5c8;
+  --sand:      #c9b99a;
+  --sand2:     #e8d8c0;
+  --conflict:  #c0392b;
+  --peace:     #27ae60;
+  --warn:      #e67e22;
+  --border:    rgba(26,24,20,0.1);
+  --border2:   rgba(26,24,20,0.06);
+  --shadow:    0 4px 24px rgba(26,24,20,0.08);
+  --shadow2:   0 2px 8px rgba(26,24,20,0.06);
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  height: 100%;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: 'Outfit', sans-serif;
+  overflow: hidden;
+}
+
+/* ── PAPER TEXTURE ── */
+body::before {
+  content: '';
+  position: fixed; inset: 0; z-index: 0;
+  background-image:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='400' height='400' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+  pointer-events: none;
+}
+
+/* ── LAYOUT ── */
+.shell {
+  position: relative; z-index: 1;
+  display: grid;
+  grid-template-columns: 280px 1fr 320px;
+  grid-template-rows: 64px 1fr;
+  height: 100vh;
+}
+
+/* ── TOPBAR ── */
+.topbar {
+  grid-column: 1 / -1;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 28px;
+  background: var(--ink);
+  border-bottom: 3px solid var(--olive);
+}
+
+.brand {
+  display: flex; align-items: center; gap: 14px;
+}
+
+.brand-emblem {
+  width: 36px; height: 36px;
+  border: 2px solid rgba(255,255,255,0.2);
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px;
+}
+
+.brand-name {
+  font-family: 'Cormorant Garamond', serif;
+  font-weight: 600; font-size: 1.3rem;
+  color: #f5f2eb; letter-spacing: 0.05em;
+}
+
+.brand-name span { color: #8fa36a; }
+
+.brand-tagline {
+  font-size: 0.6rem; color: rgba(255,255,255,0.35);
+  letter-spacing: 0.2em; text-transform: uppercase;
+  font-family: 'DM Mono', monospace;
+  margin-left: 2px; margin-top: 2px;
+}
+
+.topbar-center {
+  display: flex; align-items: center; gap: 8px;
+}
+
+.phase-step {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 0.62rem; color: rgba(255,255,255,0.4);
+  letter-spacing: 0.12em; text-transform: uppercase;
+  font-family: 'DM Mono', monospace;
+  padding: 6px 12px; border-radius: 20px;
+  border: 1px solid rgba(255,255,255,0.08);
+  transition: all 0.3s;
+  cursor: default;
+}
+
+.phase-step.active {
+  background: rgba(143,163,106,0.15);
+  border-color: rgba(143,163,106,0.4);
+  color: #8fa36a;
+}
+
+.phase-step.done {
+  background: rgba(39,174,96,0.1);
+  border-color: rgba(39,174,96,0.3);
+  color: #27ae60;
+}
+
+.phase-arrow { color: rgba(255,255,255,0.15); font-size: 0.7rem; }
+
+.topbar-right {
+  display: flex; align-items: center; gap: 14px;
+}
+
+.status-badge {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 0.62rem; letter-spacing: 0.12em; text-transform: uppercase;
+  font-family: 'DM Mono', monospace;
+  color: rgba(255,255,255,0.45);
+}
+
+.live-dot {
+  width: 7px; height: 7px; border-radius: 50%;
+  background: var(--olive2);
+  box-shadow: 0 0 8px var(--olive2);
+  animation: blink 2s infinite;
+}
+
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+/* ── LEFT PANEL: Conflict Setup ── */
+.left-panel {
+  background: var(--panel);
+  border-right: 1px solid var(--border);
+  display: flex; flex-direction: column;
+  overflow: hidden;
+}
+
+.panel-header {
+  padding: 18px 20px 14px;
+  border-bottom: 1px solid var(--border2);
+  background: var(--panel2);
+  flex-shrink: 0;
+}
+
+.panel-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1rem; font-weight: 600;
+  color: var(--ink); letter-spacing: 0.02em;
+  margin-bottom: 2px;
+}
+
+.panel-subtitle {
+  font-size: 0.62rem; color: var(--muted);
+  letter-spacing: 0.08em; text-transform: uppercase;
+  font-family: 'DM Mono', monospace;
+}
+
+.panel-body {
+  flex: 1; overflow-y: auto; padding: 16px 20px;
+  scrollbar-width: thin; scrollbar-color: var(--bg2) transparent;
+}
+
+/* Form elements */
+.field {
+  margin-bottom: 16px;
+}
+
+.field-label {
+  font-size: 0.62rem; letter-spacing: 0.15em; text-transform: uppercase;
+  color: var(--muted); font-family: 'DM Mono', monospace;
+  margin-bottom: 6px; display: block;
+}
+
+.field select, .field textarea, .field input {
+  width: 100%;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.78rem; color: var(--ink);
+  outline: none;
+  transition: border-color 0.2s;
+  appearance: none;
+}
+
+.field select:focus, .field textarea:focus, .field input:focus {
+  border-color: var(--olive);
+  background: #fff;
+}
+
+.field textarea { resize: none; line-height: 1.6; }
+
+/* Conflict type pills */
+.conflict-types {
+  display: flex; flex-wrap: wrap; gap: 6px;
+}
+
+.ct-pill {
+  font-size: 0.65rem; padding: 5px 10px;
+  border-radius: 20px; border: 1px solid var(--border);
+  cursor: pointer; font-family: 'DM Mono', monospace;
+  background: var(--bg); color: var(--muted);
+  transition: all 0.18s; white-space: nowrap;
+}
+
+.ct-pill:hover { border-color: var(--olive); color: var(--olive); }
+.ct-pill.selected { background: var(--olive); border-color: var(--olive); color: #fff; }
+
+/* Tension slider */
+.tension-bar {
+  height: 6px; background: linear-gradient(to right, #27ae60, #f39c12, #c0392b);
+  border-radius: 3px; position: relative; margin: 8px 0;
+}
+
+.tension-slider {
+  width: 100%;
+  -webkit-appearance: none;
+  height: 6px; background: transparent;
+  outline: none; cursor: pointer;
+  position: absolute; top: 0; left: 0;
+}
+
+.tension-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 18px; height: 18px;
+  border-radius: 50%;
+  background: var(--ink);
+  border: 3px solid #fff;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+  cursor: grab;
+}
+
+.tension-labels {
+  display: flex; justify-content: space-between;
+  margin-top: 8px;
+}
+
+.tension-label {
+  font-size: 0.55rem; color: var(--muted2);
+  letter-spacing: 0.08em; text-transform: uppercase;
+  font-family: 'DM Mono', monospace;
+}
+
+/* Parties */
+.party-inputs {
+  display: flex; flex-direction: column; gap: 8px;
+}
+
+.party-row {
+  display: flex; align-items: center; gap: 8px;
+}
+
+.party-flag {
+  width: 28px; height: 28px; border-radius: 6px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px; flex-shrink: 0;
+}
+
+/* Divider */
+.divider {
+  height: 1px; background: var(--border2); margin: 8px 0;
+}
+
+/* Analyze button */
+.btn-analyze {
+  width: 100%; padding: 13px;
+  background: var(--ink);
+  color: #f5f2eb;
+  border: none; border-radius: 10px;
+  font-family: 'Outfit', sans-serif;
+  font-weight: 600; font-size: 0.8rem;
+  letter-spacing: 0.06em; text-transform: uppercase;
+  cursor: pointer; transition: all 0.2s;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+}
+
+.btn-analyze:hover:not(:disabled) {
+  background: var(--olive);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(107,124,78,0.3);
+}
+
+.btn-analyze:disabled { opacity: 0.45; cursor: not-allowed; transform: none; }
+
+/* ── CENTER: Negotiation Canvas ── */
+.center-panel {
+  background: var(--bg2);
+  display: flex; flex-direction: column;
+  overflow: hidden;
+  border-right: 1px solid var(--border);
+}
+
+.canvas-header {
+  padding: 16px 24px;
+  background: var(--panel);
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+  flex-shrink: 0;
+}
+
+.canvas-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1rem; font-weight: 600;
+}
+
+.canvas-subtitle { font-size: 0.62rem; color: var(--muted); font-family: 'DM Mono', monospace; }
+
+.conflict-meter {
+  display: flex; align-items: center; gap: 10px;
+}
+
+.meter-label { font-size: 0.6rem; color: var(--muted); font-family: 'DM Mono', monospace; text-transform: uppercase; letter-spacing: 0.1em; }
+
+.meter-bar {
+  width: 120px; height: 8px;
+  background: var(--bg2); border-radius: 4px; overflow: hidden;
+}
+
+.meter-fill {
+  height: 100%; border-radius: 4px;
+  background: linear-gradient(to right, #27ae60, #f39c12, #c0392b);
+  transition: width 1s ease;
+}
+
+.meter-val { font-size: 0.7rem; font-weight: 600; font-family: 'DM Mono', monospace; }
+
+/* Chat/negotiation area */
+.negotiation-feed {
+  flex: 1; overflow-y: auto; padding: 20px 24px;
+  display: flex; flex-direction: column; gap: 16px;
+  scrollbar-width: thin; scrollbar-color: var(--bg) transparent;
+}
+
+/* System message */
+.sys-msg {
+  text-align: center;
+  font-size: 0.65rem; color: var(--muted);
+  letter-spacing: 0.1em; font-family: 'DM Mono', monospace;
+  display: flex; align-items: center; gap: 10px;
+}
+
+.sys-msg::before, .sys-msg::after {
+  content: ''; flex: 1; height: 1px; background: var(--border);
+}
+
+/* Party messages */
+.msg-block { display: flex; flex-direction: column; gap: 4px; }
+
+.msg-party {
+  font-size: 0.58rem; letter-spacing: 0.15em; text-transform: uppercase;
+  font-family: 'DM Mono', monospace; color: var(--muted);
+  padding: 0 4px;
+}
+
+.msg-bubble {
+  padding: 14px 16px; border-radius: 12px;
+  font-size: 0.8rem; line-height: 1.7; max-width: 85%;
+}
+
+.msg-bubble.party-a {
+  background: #fff;
+  border: 1px solid var(--border);
+  border-bottom-left-radius: 4px;
+  align-self: flex-start;
+  box-shadow: var(--shadow2);
+}
+
+.msg-bubble.party-b {
+  background: var(--ink);
+  color: #f5f2eb;
+  border-bottom-right-radius: 4px;
+  align-self: flex-end;
+}
+
+.msg-bubble.ai-mediator {
+  background: linear-gradient(135deg, #f0ece0, #e8f4e8);
+  border: 1px solid rgba(107,124,78,0.25);
+  border-radius: 12px;
+  align-self: center;
+  max-width: 92%;
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 0.88rem; font-style: italic;
+  color: var(--ink2);
+  padding: 16px 20px;
+  position: relative;
+}
+
+.msg-bubble.ai-mediator::before {
+  content: '🕊️';
+  position: absolute; top: -10px; left: 50%; transform: translateX(-50%);
+  font-size: 16px;
+}
+
+/* Input row */
+.negotiation-input-row {
+  padding: 14px 20px;
+  background: var(--panel);
+  border-top: 1px solid var(--border);
+  display: flex; gap: 10px; align-items: flex-end;
+  flex-shrink: 0;
+}
+
+.party-switcher {
+  display: flex; flex-direction: column; gap: 4px; flex-shrink: 0;
+}
+
+.party-switch-btn {
+  padding: 6px 10px; border-radius: 6px; border: 1px solid var(--border);
+  font-size: 0.6rem; letter-spacing: 0.1em; text-transform: uppercase;
+  font-family: 'DM Mono', monospace; cursor: pointer;
+  background: var(--bg); color: var(--muted);
+  transition: all 0.15s;
+}
+
+.party-switch-btn.active-a { background: #fff; border-color: var(--dove); color: var(--dove); }
+.party-switch-btn.active-b { background: var(--ink); border-color: var(--ink); color: #fff; }
+
+.msg-input-wrap { flex: 1; }
+
+.msg-input {
+  width: 100%; background: var(--bg);
+  border: 1px solid var(--border); border-radius: 10px;
+  padding: 10px 14px; font-family: 'Outfit', sans-serif;
+  font-size: 0.78rem; color: var(--ink); outline: none;
+  resize: none; line-height: 1.5;
+  transition: border-color 0.2s;
+}
+
+.msg-input:focus { border-color: var(--olive); background: #fff; }
+
+.send-btn {
+  padding: 10px 16px; background: var(--olive);
+  border: none; border-radius: 10px; cursor: pointer;
+  font-size: 0.8rem; color: #fff; transition: all 0.2s;
+}
+
+.send-btn:hover { background: var(--olive2); }
+
+/* ── RIGHT PANEL: Analysis & Solutions ── */
+.right-panel {
+  background: var(--panel);
+  display: flex; flex-direction: column;
+  overflow: hidden;
+}
+
+.right-body {
+  flex: 1; overflow-y: auto; padding: 16px 18px;
+  scrollbar-width: thin; scrollbar-color: var(--bg2) transparent;
+}
+
+/* Solution cards */
+.solution-card {
+  background: var(--panel2);
+  border: 1px solid var(--border);
+  border-radius: 12px; padding: 14px;
+  margin-bottom: 12px;
+  border-left: 3px solid;
+  animation: slideIn 0.4s ease forwards;
+  opacity: 0; transform: translateX(10px);
+}
+
+@keyframes slideIn { to { opacity: 1; transform: translateX(0); } }
+
+.solution-card:nth-child(1) { animation-delay: 0.1s; }
+.solution-card:nth-child(2) { animation-delay: 0.2s; }
+.solution-card:nth-child(3) { animation-delay: 0.3s; }
+.solution-card:nth-child(4) { animation-delay: 0.4s; }
+
+.solution-card.diplomatic { border-color: var(--dove); }
+.solution-card.economic   { border-color: var(--sand); }
+.solution-card.ceasefire  { border-color: var(--olive); }
+.solution-card.humanitarian { border-color: #e67e22; }
+
+.solution-type {
+  font-size: 0.58rem; letter-spacing: 0.18em; text-transform: uppercase;
+  font-family: 'DM Mono', monospace; margin-bottom: 6px;
+  display: flex; align-items: center; gap: 6px;
+}
+
+.solution-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 0.95rem; font-weight: 600; margin-bottom: 6px;
+  line-height: 1.3;
+}
+
+.solution-desc {
+  font-size: 0.72rem; color: var(--ink2); line-height: 1.65;
+}
+
+.feasibility-bar {
+  margin-top: 10px;
+}
+
+.feasibility-label {
+  display: flex; justify-content: space-between;
+  font-size: 0.58rem; color: var(--muted); margin-bottom: 4px;
+  font-family: 'DM Mono', monospace;
+}
+
+.feas-bar {
+  height: 3px; background: var(--bg2); border-radius: 2px; overflow: hidden;
+}
+
+.feas-fill { height: 100%; border-radius: 2px; transition: width 1s ease; }
+
+/* Score metrics */
+.metrics-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 14px;
+}
+
+.metric-cell {
+  background: var(--panel2); border: 1px solid var(--border);
+  border-radius: 10px; padding: 12px; text-align: center;
+}
+
+.metric-val {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1.6rem; font-weight: 700; line-height: 1;
+  margin-bottom: 2px;
+}
+
+.metric-name {
+  font-size: 0.58rem; color: var(--muted); letter-spacing: 0.1em;
+  text-transform: uppercase; font-family: 'DM Mono', monospace;
+}
+
+/* Timeline */
+.timeline { position: relative; padding-left: 20px; }
+
+.timeline::before {
+  content: ''; position: absolute; left: 7px; top: 0; bottom: 0;
+  width: 2px; background: var(--border);
+}
+
+.timeline-item {
+  position: relative; margin-bottom: 14px;
+}
+
+.timeline-dot {
+  position: absolute; left: -20px; top: 4px;
+  width: 10px; height: 10px; border-radius: 50%;
+  border: 2px solid #fff;
+  box-shadow: 0 0 0 2px var(--border);
+}
+
+.timeline-phase {
+  font-size: 0.6rem; letter-spacing: 0.12em; text-transform: uppercase;
+  font-family: 'DM Mono', monospace; color: var(--muted); margin-bottom: 3px;
+}
+
+.timeline-action {
+  font-size: 0.75rem; color: var(--ink2); line-height: 1.5;
+}
+
+/* Empty right */
+.empty-right {
+  flex: 1; display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  gap: 12px; text-align: center; opacity: 0.4; padding: 30px;
+}
+
+.empty-right-icon { font-size: 2.5rem; filter: grayscale(1); }
+.empty-right-text { font-size: 0.72rem; color: var(--muted); line-height: 1.7; }
+
+/* Loading */
+.loading-wrap {
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  padding: 40px 20px; gap: 14px;
+}
+
+.loader-olive {
+  width: 36px; height: 36px;
+  border: 2px solid rgba(107,124,78,0.2);
+  border-top-color: var(--olive);
+  border-radius: 50%;
+  animation: spin 0.9s linear infinite;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.loading-text {
+  font-size: 0.65rem; color: var(--muted);
+  letter-spacing: 0.12em; font-family: 'DM Mono', monospace;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--bg2); border-radius: 2px; }
+</style>
+</head>
+<body>
+
+<div class="shell">
+
+  <!-- TOPBAR -->
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand-emblem">🕊️</div>
+      <div>
+        <div class="brand-name">Peace<span>Maker</span> AI</div>
+        <div class="brand-tagline">Conflict Resolution Intelligence</div>
+      </div>
+    </div>
+    <div class="topbar-center">
+      <div class="phase-step active" id="p1">① Conflict Mapping</div>
+      <div class="phase-arrow">›</div>
+      <div class="phase-step" id="p2">② Negotiation</div>
+      <div class="phase-arrow">›</div>
+      <div class="phase-step" id="p3">③ Peace Framework</div>
+    </div>
+    <div class="topbar-right">
+      <div class="status-badge"><div class="live-dot"></div> AI Mediator Online</div>
+    </div>
+  </header>
+
+  <!-- LEFT: Conflict Setup -->
+  <aside class="left-panel">
+    <div class="panel-header">
+      <div class="panel-title">Conflict Configuration</div>
+      <div class="panel-subtitle">Define the situation</div>
+    </div>
+    <div class="panel-body">
+
+      <div class="field">
+        <label class="field-label">Conflict Type</label>
+        <div class="conflict-types" id="conflictTypes">
+          <button class="ct-pill selected" data-type="Territorial">🗺️ Territorial</button>
+          <button class="ct-pill" data-type="Religious">⛪ Religious</button>
+          <button class="ct-pill" data-type="Ethnic">👥 Ethnic</button>
+          <button class="ct-pill" data-type="Resource">⛽ Resource</button>
+          <button class="ct-pill" data-type="Political">🏛️ Political</button>
+          <button class="ct-pill" data-type="Economic">💰 Economic</button>
+          <button class="ct-pill" data-type="Ideological">📜 Ideological</button>
+          <button class="ct-pill" data-type="Cyber">💻 Cyber</button>
+        </div>
+      </div>
+
+      <div class="field">
+        <label class="field-label">Party A — Name / Nation</label>
+        <div class="party-row">
+          <div class="party-flag" style="background:#e8f0ff">🔵</div>
+          <input type="text" id="partyA" placeholder="e.g. Republic of Aldoria" value="Republic of Aldoria"/>
+        </div>
+      </div>
+
+      <div class="field">
+        <label class="field-label">Party B — Name / Nation</label>
+        <div class="party-row">
+          <div class="party-flag" style="background:#ffe8e8">🔴</div>
+          <input type="text" id="partyB" placeholder="e.g. Kingdom of Brethonia" value="Kingdom of Brethonia"/>
+        </div>
+      </div>
+
+      <div class="field">
+        <label class="field-label">Conflict Description</label>
+        <textarea id="conflictDesc" rows="4" placeholder="Describe the core issues, historical context, and what triggered this conflict..."
+        >A long-standing border dispute over the mineral-rich Keldara Valley region. Both nations claim historical sovereignty. Recent oil discoveries have intensified military posturing and civilian casualties are rising.</textarea>
+      </div>
+
+      <div class="field">
+        <label class="field-label">Tension Level</label>
+        <div class="tension-bar">
+          <input type="range" class="tension-slider" id="tensionSlider" min="1" max="10" value="7" />
+        </div>
+        <div class="tension-labels">
+          <span class="tension-label">Cold Tension</span>
+          <span class="tension-label" id="tensionVal" style="color:var(--ink);font-weight:600">Level 7</span>
+          <span class="tension-label">Active War</span>
+        </div>
+      </div>
+
+      <div class="field">
+        <label class="field-label">Core Demands (Party A)</label>
+        <textarea id="demandsA" rows="2" placeholder="What does Party A want most?">Full sovereignty over Keldara Valley and control of mineral rights.</textarea>
+      </div>
+
+      <div class="field">
+        <label class="field-label">Core Demands (Party B)</label>
+        <textarea id="demandsB" rows="2" placeholder="What does Party B want most?">A shared economic zone and guaranteed border security.</textarea>
+      </div>
+
+      <div class="divider"></div>
+
+      <button class="btn-analyze" id="startBtn" onclick="startMediation()">
+        🕊️ Begin AI Mediation
+      </button>
+
+    </div>
+  </aside>
+
+  <!-- CENTER: Negotiation Canvas -->
+  <main class="center-panel">
+    <div class="canvas-header">
+      <div>
+        <div class="canvas-title">Negotiation Chamber</div>
+        <div class="canvas-subtitle">AI-Mediated Dialogue</div>
+      </div>
+      <div class="conflict-meter">
+        <span class="meter-label">Conflict Intensity</span>
+        <div class="meter-bar">
+          <div class="meter-fill" id="meterFill" style="width:70%"></div>
+        </div>
+        <span class="meter-val" id="meterVal" style="color:#e67e22">70%</span>
+      </div>
+    </div>
+
+    <div class="negotiation-feed" id="negotiationFeed">
+      <div class="sys-msg">Session not started — configure conflict and begin mediation</div>
+      <div style="text-align:center;padding:40px 20px;opacity:0.35">
+        <div style="font-size:3rem;margin-bottom:12px">🕊️</div>
+        <div style="font-family:'Cormorant Garamond',serif;font-size:1.1rem;font-style:italic;color:var(--muted);line-height:1.7">
+          "Peace cannot be kept by force;<br/>it can only be achieved by understanding."<br/>
+          <span style="font-size:0.75rem;font-family:'DM Mono',monospace;font-style:normal">— Albert Einstein</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="negotiation-input-row">
+      <div class="party-switcher">
+        <button class="party-switch-btn active-a" id="btnA" onclick="switchParty('A')">Party A</button>
+        <button class="party-switch-btn" id="btnB" onclick="switchParty('B')">Party B</button>
+      </div>
+      <div class="msg-input-wrap">
+        <textarea class="msg-input" id="msgInput" rows="2"
+          placeholder="Type a statement from the active party... then press Send for AI mediation."
+          onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendMessage();}"></textarea>
+      </div>
+      <button class="send-btn" onclick="sendMessage()">Send ›</button>
+    </div>
+  </main>
+
+  <!-- RIGHT: Solutions -->
+  <aside class="right-panel">
+    <div class="panel-header">
+      <div class="panel-title">Peace Framework</div>
+      <div class="panel-subtitle">AI-Generated Solutions</div>
+    </div>
+    <div class="right-body" id="rightBody">
+      <div class="empty-right">
+        <div class="empty-right-icon">📋</div>
+        <div class="empty-right-text">Peace proposals and analysis will appear here after mediation begins.</div>
+      </div>
+    </div>
+  </aside>
+
+</div>
+
+<script>
+let activeParty = 'A';
+let sessionStarted = false;
+let selectedConflictType = 'Territorial';
+let messageCount = 0;
+let conflictIntensity = 70;
+
+// Conflict type selection
+document.querySelectorAll('.ct-pill').forEach(pill => {
+  pill.addEventListener('click', () => {
+    document.querySelectorAll('.ct-pill').forEach(p => p.classList.remove('selected'));
+    pill.classList.add('selected');
+    selectedConflictType = pill.dataset.type;
+  });
+});
+
+// Tension slider
+document.getElementById('tensionSlider').addEventListener('input', function() {
+  document.getElementById('tensionVal').textContent = `Level ${this.value}`;
+  conflictIntensity = this.value * 10;
+  updateMeter(conflictIntensity);
+});
+
+function updateMeter(val) {
+  document.getElementById('meterFill').style.width = val + '%';
+  const el = document.getElementById('meterVal');
+  el.textContent = val + '%';
+  el.style.color = val > 70 ? '#c0392b' : val > 40 ? '#e67e22' : '#27ae60';
+}
+
+function switchParty(p) {
+  activeParty = p;
+  document.getElementById('btnA').className = 'party-switch-btn' + (p==='A'?' active-a':'');
+  document.getElementById('btnB').className = 'party-switch-btn' + (p==='B'?' active-b':'');
+  document.getElementById('msgInput').placeholder = `Speaking as ${p==='A'?document.getElementById('partyA').value:document.getElementById('partyB').value}...`;
+}
+
+function addMessage(content, type, party) {
+  const feed = document.getElementById('negotiationFeed');
+  const block = document.createElement('div');
+  block.className = 'msg-block';
+  const label = type === 'ai-mediator'
+    ? '<div class="msg-party" style="text-align:center;color:var(--olive)">🕊️ AI Mediator</div>'
+    : `<div class="msg-party" style="${type==='party-b'?'text-align:right':''}">${party}</div>`;
+  block.innerHTML = `${label}<div class="msg-bubble ${type}">${content}</div>`;
+  feed.appendChild(block);
+  feed.scrollTop = feed.scrollHeight;
+}
+
+function addSysMsg(text) {
+  const feed = document.getElementById('negotiationFeed');
+  const el = document.createElement('div');
+  el.className = 'sys-msg';
+  el.textContent = text;
+  feed.appendChild(el);
+  feed.scrollTop = feed.scrollHeight;
+}
+
+async function startMediation() {
+  const partyA = document.getElementById('partyA').value.trim() || 'Party A';
+  const partyB = document.getElementById('partyB').value.trim() || 'Party B';
+  const desc = document.getElementById('conflictDesc').value.trim();
+  const demandsA = document.getElementById('demandsA').value.trim();
+  const demandsB = document.getElementById('demandsB').value.trim();
+  const tension = document.getElementById('tensionSlider').value;
+
+  const btn = document.getElementById('startBtn');
+  btn.disabled = true;
+  btn.innerHTML = '⏳ Initializing...';
+
+  // Update phases
+  document.getElementById('p1').className = 'phase-step done';
+  document.getElementById('p2').className = 'phase-step active';
+
+  // Clear feed
+  document.getElementById('negotiationFeed').innerHTML = '';
+  addSysMsg(`Mediation session opened — ${partyA} vs ${partyB}`);
+
+  // Update switcher labels
+  document.getElementById('btnA').textContent = partyA;
+  document.getElementById('btnB').textContent = partyB;
+
+  // Show loading in right panel
+  document.getElementById('rightBody').innerHTML = `
+    <div class="loading-wrap">
+      <div class="loader-olive"></div>
+      <div class="loading-text">Analyzing conflict dynamics...</div>
+    </div>`;
+
+  try {
+    const prompt = `You are the world's foremost AI peace mediator, combining expertise from the UN, International Court of Justice, and conflict resolution academics.
+
+CONFLICT BRIEFING:
+- Parties: ${partyA} vs ${partyB}
+- Type: ${selectedConflictType}
+- Tension Level: ${tension}/10
+- Description: ${desc}
+- ${partyA} demands: ${demandsA}
+- ${partyB} demands: ${demandsB}
+
+Respond ONLY with valid JSON, no markdown or backticks:
+
+{
+  "openingStatement": "<A wise, neutral, 2-3 sentence opening statement from the AI mediator setting the tone for peace talks>",
+  "conflictAnalysis": {
+    "rootCauses": ["<root cause 1>", "<root cause 2>", "<root cause 3>"],
+    "commonGround": ["<shared interest 1>", "<shared interest 2>"],
+    "majorObstacles": ["<obstacle 1>", "<obstacle 2>"]
+  },
+  "peaceScore": <integer 0-100 representing likelihood of peace if negotiations proceed>,
+  "humanitarianScore": <integer 0-100 representing urgency of humanitarian need>,
+  "stabilityScore": <integer 0-100 representing regional stability risk>,
+  "timeToResolution": "<estimate like '6-18 months' or '2-5 years'>",
+  "solutions": [
+    {
+      "type": "ceasefire",
+      "title": "<Ceasefire framework title>",
+      "description": "<2-3 sentence description of immediate ceasefire terms>",
+      "feasibility": <integer 0-100>
+    },
+    {
+      "type": "diplomatic",
+      "title": "<Diplomatic solution title>",
+      "description": "<2-3 sentence description of diplomatic path>",
+      "feasibility": <integer 0-100>
+    },
+    {
+      "type": "economic",
+      "title": "<Economic framework title>",
+      "description": "<2-3 sentence description of economic cooperation>",
+      "feasibility": <integer 0-100>
+    },
+    {
+      "type": "humanitarian",
+      "title": "<Humanitarian corridor title>",
+      "description": "<2-3 sentence humanitarian initiative>",
+      "feasibility": <integer 0-100>
+    }
+  ],
+  "roadmap": [
+    { "phase": "Immediate (0-30 days)", "action": "<critical first step>" },
+    { "phase": "Short-term (1-6 months)", "action": "<confidence building measure>" },
+    { "phase": "Medium-term (6-24 months)", "action": "<structural agreement>" },
+    { "phase": "Long-term (2-5 years)", "action": "<lasting peace framework>" }
+  ]
+}`;
+
+    const res = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: "claude-sonnet-4-20250514",
+        max_tokens: 1500,
+        messages: [{ role: "user", content: prompt }]
+      })
+    });
+
+    const data = await res.json();
+    const raw = data.content.map(i => i.text || "").join("");
+    const result = JSON.parse(raw.replace(/```json|```/g, "").trim());
+
+    sessionStarted = true;
+    addMessage(result.openingStatement, 'ai-mediator', 'AI Mediator');
+    addSysMsg('AI Mediator has reviewed both parties — type statements to begin dialogue');
+
+    // Reduce meter slightly
+    conflictIntensity = Math.max(20, conflictIntensity - 10);
+    updateMeter(conflictIntensity);
+
+    renderRightPanel(result, partyA, partyB);
+
+    document.getElementById('p3').className = 'phase-step active';
+
+  } catch(e) {
+    addSysMsg('⚠️ Error initializing session. Please try again.');
+    console.error(e);
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '🕊️ Restart Mediation';
+  }
+}
+
+async function sendMessage() {
+  if (!sessionStarted) { alert('Please start mediation first.'); return; }
+  const msg = document.getElementById('msgInput').value.trim();
+  if (!msg) return;
+
+  const partyA = document.getElementById('partyA').value.trim() || 'Party A';
+  const partyB = document.getElementById('partyB').value.trim() || 'Party B';
+  const activeName = activeParty === 'A' ? partyA : partyB;
+
+  addMessage(msg, activeParty === 'A' ? 'party-a' : 'party-b', activeName);
+  document.getElementById('msgInput').value = '';
+  messageCount++;
+
+  // AI responds every message
+  const feed = document.getElementById('negotiationFeed');
+  const loadDiv = document.createElement('div');
+  loadDiv.className = 'sys-msg';
+  loadDiv.textContent = 'AI Mediator is considering...';
+  loadDiv.id = 'aiTyping';
+  feed.appendChild(loadDiv);
+  feed.scrollTop = feed.scrollHeight;
+
+  try {
+    const desc = document.getElementById('conflictDesc').value.trim();
+    const prompt = `You are an AI peace mediator facilitating talks between ${partyA} and ${partyB} over this conflict: ${desc}.
+
+${activeName} just said: "${msg}"
+
+Respond with a wise, balanced mediator response that:
+1. Acknowledges ${activeName}'s concern without taking sides
+2. Finds a constructive reframe or middle ground
+3. Asks a probing question to advance the dialogue
+4. Keeps response to 2-3 sentences maximum
+
+Reply in plain text only — no JSON, no formatting. Be diplomatic, wise, and human.`;
+
+    const res = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: "claude-sonnet-4-20250514",
+        max_tokens: 200,
+        messages: [{ role: "user", content: prompt }]
+      })
+    });
+
+    const data = await res.json();
+    const reply = data.content.map(i => i.text || "").join("").trim();
+
+    document.getElementById('aiTyping')?.remove();
+    addMessage(reply, 'ai-mediator', 'AI Mediator');
+
+    // Slightly reduce conflict intensity with each exchange
+    if (messageCount % 3 === 0) {
+      conflictIntensity = Math.max(10, conflictIntensity - 5);
+      updateMeter(conflictIntensity);
+      addSysMsg(`Tension reduced to ${conflictIntensity}% — dialogue is progressing`);
+    }
+
+  } catch(e) {
+    document.getElementById('aiTyping')?.remove();
+    addMessage('The mediator is momentarily unavailable. Please continue the dialogue.', 'ai-mediator', 'AI Mediator');
+  }
+}
+
+function renderRightPanel(r, partyA, partyB) {
+  const typeStyle = {
+    ceasefire:    { color:'#6b7c4e', icon:'🛑', label:'Ceasefire' },
+    diplomatic:   { color:'#7c8fa3', icon:'🤝', label:'Diplomatic' },
+    economic:     { color:'#c9a84c', icon:'💼', label:'Economic' },
+    humanitarian: { color:'#e67e22', icon:'❤️', label:'Humanitarian' }
+  };
+
+  const dotColor = v => v > 70 ? '#27ae60' : v > 40 ? '#e67e22' : '#c0392b';
+
+  document.getElementById('rightBody').innerHTML = `
+
+    <!-- Metrics -->
+    <div class="metrics-grid">
+      <div class="metric-cell">
+        <div class="metric-val" style="color:${dotColor(r.peaceScore)}">${r.peaceScore}%</div>
+        <div class="metric-name">Peace Likelihood</div>
+      </div>
+      <div class="metric-cell">
+        <div class="metric-val" style="color:${dotColor(100-r.humanitarianScore)}">${r.humanitarianScore}%</div>
+        <div class="metric-name">Humanitarian Risk</div>
+      </div>
+      <div class="metric-cell">
+        <div class="metric-val" style="color:var(--dove)">${r.timeToResolution}</div>
+        <div class="metric-name">Est. Resolution</div>
+      </div>
+      <div class="metric-cell">
+        <div class="metric-val" style="color:${dotColor(r.stabilityScore)}">${r.stabilityScore}%</div>
+        <div class="metric-name">Stability Index</div>
+      </div>
+    </div>
+
+    <!-- Common Ground -->
+    <div style="margin-bottom:14px">
+      <div class="panel-subtitle" style="margin-bottom:8px;color:var(--olive)">✅ Common Ground Found</div>
+      ${r.conflictAnalysis.commonGround.map(g => `
+        <div style="display:flex;align-items:flex-start;gap:8px;margin-bottom:5px;font-size:0.72rem;color:var(--ink2);line-height:1.5">
+          <span style="color:var(--olive);margin-top:2px">›</span> ${g}
+        </div>`).join('')}
+    </div>
+
+    <!-- Solutions -->
+    <div class="panel-subtitle" style="margin-bottom:10px">📋 Proposed Solutions</div>
+    ${r.solutions.map((s,i) => {
+      const st = typeStyle[s.type] || typeStyle.diplomatic;
+      return `
+      <div class="solution-card ${s.type}" style="animation-delay:${i*0.12}s">
+        <div class="solution-type" style="color:${st.color}">${st.icon} ${st.label} Initiative</div>
+        <div class="solution-title">${s.title}</div>
+        <div class="solution-desc">${s.description}</div>
+        <div class="feasibility-bar">
+          <div class="feasibility-label"><span>Feasibility</span><span>${s.feasibility}%</span></div>
+          <div class="feas-bar"><div class="feas-fill" style="width:${s.feasibility}%;background:${st.color}"></div></div>
+        </div>
+      </div>`;
+    }).join('')}
+
+    <!-- Roadmap -->
+    <div class="panel-subtitle" style="margin-bottom:12px;margin-top:4px">🗓️ Peace Roadmap</div>
+    <div class="timeline">
+      ${r.roadmap.map((step, i) => {
+        const colors = [var_conflict='#c0392b', '#e67e22', '#6b7c4e', '#27ae60'];
+        const c = ['#c0392b','#e67e22','#6b7c4e','#27ae60'][i] || '#6b7c4e';
+        return `
+        <div class="timeline-item">
+          <div class="timeline-dot" style="background:${c}"></div>
+          <div class="timeline-phase">${step.phase}</div>
+          <div class="timeline-action">${step.action}</div>
+        </div>`;
+      }).join('')}
+    </div>
+
+    <div style="height:16px"></div>
+  `;
+}
+</script>
+</body>
+</html>
